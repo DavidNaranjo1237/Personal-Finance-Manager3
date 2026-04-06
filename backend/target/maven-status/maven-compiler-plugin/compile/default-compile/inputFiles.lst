@@ -1,0 +1,13 @@
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/controller/GastoController.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/dto/TransaccionDTO.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/service/AuthService.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/service/IngresoService.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/controller/HomeController.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/SecurityConfig.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/service/GastoService.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/BaseApplication.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/model/Gasto.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/AuthDTO.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/model/Ingreso.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/controller/IngresoController.java
+/home/olive/proyectos/personal-finance-manager2/backend/src/main/java/com/base/app/controller/AuthController.java

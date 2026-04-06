@@ -1,0 +1,14 @@
+com/base/app/controller/AuthController.class
+com/base/app/model/Ingreso.class
+com/base/app/controller/IngresoController.class
+com/base/app/service/AuthService.class
+com/base/app/BaseApplication.class
+com/base/app/AuthDTO.class
+com/base/app/controller/HomeController.class
+com/base/app/service/AuthService$1.class
+com/base/app/controller/GastoController.class
+com/base/app/dto/TransaccionDTO.class
+com/base/app/service/IngresoService.class
+com/base/app/model/Gasto.class
+com/base/app/SecurityConfig.class
+com/base/app/service/GastoService.class
