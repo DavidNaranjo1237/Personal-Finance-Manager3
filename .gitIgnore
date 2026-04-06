@@ -1,0 +1,7 @@
+target/
+*.class
+*.Zone.Identifier
+node_modules/
+dist/
+.idea/
+.vscode/
