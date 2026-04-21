@@ -1,7 +1,17 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { router } from './app/routes'
+import { BrowserRouter, RouterProvider } from 'react-router-dom'
+import './styles/index.css';
+import './styles/tailwind.css';
+import './styles/theme.css';
 
-  import { createRoot } from "react-dom/client";
-  import App from "./app/App.tsx";
-  import "./styles/index.css";
 
-  createRoot(document.getElementById("root")!).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+   <RouterProvider router={router} />
+  </React.StrictMode>
+)
+  
+  
   

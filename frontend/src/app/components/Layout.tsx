@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, TrendingUp, TrendingDown, History, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { useEffect } from 'react';
@@ -17,6 +17,7 @@ export default function Layout() {
 
   const handleLogout = () => {
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('token');
     navigate('/');
   };
 
@@ -45,6 +46,7 @@ export default function Layout() {
               </p>
             </div>
           </div>
+
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="size-4 mr-2" />
             Cerrar Sesión
@@ -62,7 +64,7 @@ export default function Layout() {
                   <Button
                     variant={isActive(item.path) ? 'default' : 'ghost'}
                     className={`w-full justify-start ${
-                      isActive(item.path) ? 'bg-blue-500 hover:bg-blue-600' : ''
+                      isActive(item.path) ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''
                     }`}
                   >
                     <item.icon className="size-5 mr-3" />

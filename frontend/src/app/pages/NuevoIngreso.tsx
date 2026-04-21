@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,7 +7,6 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-// Importamos la función de guardado desde tu archivo de servicios
 import { saveIngreso } from "../api";
 
 export default function NuevoIngreso() {
@@ -15,45 +14,51 @@ export default function NuevoIngreso() {
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [descripcion, setDescripcion] = useState('');
-  const [loading, setLoading] = useState(false); // Estado para evitar múltiples clics
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 1. Validaciones de negocio
     const montoNum = parseFloat(monto);
-    if (montoNum <= 0) {
+
+    // 🔴 Validación monto
+    if (!monto || isNaN(montoNum) || montoNum <= 0) {
       toast.error('El monto debe ser mayor a 0');
       return;
     }
 
+    // 🔴 Validación fecha
     const fechaSeleccionada = new Date(fecha);
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
-    
+
     if (fechaSeleccionada > hoy) {
       toast.error('La fecha no puede ser futura');
       return;
     }
 
-    // 2. Preparar el objeto con la estructura que espera tu Backend
+    // 🔴 Validación sesión (MEJORA CLAVE)
+    const userEmail = localStorage.getItem('userEmail');
+    const token = localStorage.getItem('token');
+
+    if (!userEmail || !token) {
+      toast.error('Sesión inválida o expirada');
+      navigate('/');
+      return;
+    }
+
     const nuevoIngreso = {
       monto: montoNum,
       fecha,
       descripcion,
-      usuarioEmail: localStorage.getItem('userEmail') || 'demo@gamezone.com',
+      usuarioEmail: userEmail,
     };
 
     setLoading(true);
 
     try {
-      // 3. LLAMADA REAL AL BACKEND
-      // Recuperamos el token si es que tu API lo requiere (Bearer Token)
-      const token = localStorage.getItem('token') || ""; 
-      
       await saveIngreso(nuevoIngreso, token);
 
-      // Si llegamos aquí, el backend respondió 200 OK
       toast.success('Registro guardado correctamente', {
         description: `Ingreso de ${new Intl.NumberFormat('es-MX', {
           style: 'currency',
@@ -61,22 +66,23 @@ export default function NuevoIngreso() {
         }).format(montoNum)} registrado en la base de datos`,
       });
 
-      // Limpiar formulario
+      // 🔄 limpiar formulario
       setMonto('');
       setDescripcion('');
       setFecha(new Date().toISOString().split('T')[0]);
 
-      // Redirigir al dashboard
+      // 🔁 redirigir
       setTimeout(() => {
         navigate('/dashboard');
-      }, 1000);
+      }, 800);
 
     } catch (error: any) {
-      // Manejo de errores (CORS, 403, Backend caído, etc.)
       console.error("Error al guardar ingreso:", error);
-      toast.error('Error al conectar con el servidor', {
-        description: error.message || 'Verifica que el backend esté corriendo en Docker'
+
+      toast.error('Error al guardar el ingreso', {
+        description: error?.message || 'Verifica que el backend esté activo',
       });
+
     } finally {
       setLoading(false);
     }
@@ -84,6 +90,7 @@ export default function NuevoIngreso() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
+
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -93,9 +100,12 @@ export default function NuevoIngreso() {
         >
           <ArrowLeft className="size-5" />
         </Button>
+
         <div>
           <h2 className="text-2xl font-bold">Registrar Ingreso</h2>
-          <p className="text-sm text-gray-500">Añade un nuevo ingreso a tu cuenta de GameZone</p>
+          <p className="text-sm text-gray-500">
+            Añade un nuevo ingreso a tu cuenta
+          </p>
         </div>
       </div>
 
@@ -108,21 +118,25 @@ export default function NuevoIngreso() {
             <div>
               <CardTitle>Nuevo Ingreso</CardTitle>
               <CardDescription>
-                Los datos se guardarán directamente en tu historial financiero
+                Los datos se guardarán en tu historial financiero
               </CardDescription>
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+
             <div className="space-y-2">
               <Label htmlFor="monto">
                 Monto <span className="text-red-500">*</span>
               </Label>
+
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
                   $
                 </span>
+
                 <Input
                   id="monto"
                   type="number"
@@ -142,6 +156,7 @@ export default function NuevoIngreso() {
               <Label htmlFor="fecha">
                 Fecha <span className="text-red-500">*</span>
               </Label>
+
               <Input
                 id="fecha"
                 type="date"
@@ -157,9 +172,10 @@ export default function NuevoIngreso() {
               <Label htmlFor="descripcion">
                 Descripción <span className="text-red-500">*</span>
               </Label>
+
               <Textarea
                 id="descripcion"
-                placeholder="Ej: Venta de consola, Suscripción, Salario..."
+                placeholder="Ej: Salario, Venta, Ingreso extra..."
                 rows={4}
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
@@ -178,6 +194,7 @@ export default function NuevoIngreso() {
               >
                 Cancelar
               </Button>
+
               <Button
                 type="submit"
                 className="flex-1 bg-green-600 hover:bg-green-700"
@@ -186,9 +203,11 @@ export default function NuevoIngreso() {
                 {loading ? 'Guardando...' : 'Guardar Ingreso'}
               </Button>
             </div>
+
           </form>
         </CardContent>
       </Card>
+
     </div>
   );
 }
