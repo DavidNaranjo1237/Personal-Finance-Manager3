@@ -1,4 +1,5 @@
-const BASE_URL = "https://personal-finance-manager3.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 
 /**
  * FUNCIÓN INTERNA PARA MANEJAR RESPUESTAS MIXTAS (JSON O TEXTO)
