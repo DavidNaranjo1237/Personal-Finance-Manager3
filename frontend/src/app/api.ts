@@ -1,23 +1,19 @@
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "https://personal-finance-manager3.onrender.com";
 
 /**
  * FUNCIÓN INTERNA PARA MANEJAR RESPUESTAS MIXTAS (JSON O TEXTO)
- * Valida si la respuesta es exitosa y maneja el contenido según su tipo.
  */
 async function handleResponse(response: Response) {
   if (!response.ok) {
     const errorText = await response.text();
-    // Lanza un error con el mensaje del backend si la petición falla (4xx o 5xx)
     throw new Error(errorText || "Error en la petición");
   }
 
   const contentType = response.headers.get("content-type");
-  
-  // Si el backend devuelve JSON (gracias al cambio en el Controller)
+
   if (contentType && contentType.includes("application/json")) {
     return response.json();
   } else {
-    // Si el backend envía texto plano, lo devolvemos como objeto para mantener consistencia
     const text = await response.text();
     return { message: text };
   }
@@ -26,7 +22,7 @@ async function handleResponse(response: Response) {
 // --- AUTENTICACIÓN ---
 
 export async function login(email: any, password: any) {
-  const response = await fetch(`${BASE_URL}/auth/login`, {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, { // ✅ FIX
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -37,30 +33,28 @@ export async function login(email: any, password: any) {
 // --- FUNCIONES DE OBTENCIÓN (GET) ---
 
 export async function fetchIngresos(token: string) {
-  const response = await fetch(`${BASE_URL}/ingresos`, {
+  const response = await fetch(`${BASE_URL}/api/ingresos`, { // ✅ FIX
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function fetchGastos(token: string) {
-  const response = await fetch(`${BASE_URL}/gastos`, {
+  const response = await fetch(`${BASE_URL}/api/gastos`, { // ✅ FIX
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function fetchHistorial(token: string) {
-  // Coincide con @GetMapping("/historial")
-  const response = await fetch(`${BASE_URL}/gastos/historial`, {
+  const response = await fetch(`${BASE_URL}/api/gastos/historial`, { // ✅ FIX
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function fetchBalance(token: string) {
-  // Coincide con @GetMapping("/balance")
-  const response = await fetch(`${BASE_URL}/gastos/balance`, {
+  const response = await fetch(`${BASE_URL}/api/gastos/balance`, { // ✅ FIX
     headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
@@ -69,28 +63,27 @@ export async function fetchBalance(token: string) {
 // --- FUNCIONES DE GUARDADO (POST) ---
 
 export async function saveIngreso(ingreso: any, token: string) {
-  const response = await fetch(`${BASE_URL}/ingresos`, {
+  const response = await fetch(`${BASE_URL}/api/ingresos`, { // ✅ FIX
     method: "POST",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}` 
+      "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(ingreso),
   });
-  
+
   return handleResponse(response);
 }
 
 export async function saveGasto(gasto: any, token: string) {
-  // Coincide con @PostMapping en el GastoController
-  const response = await fetch(`${BASE_URL}/gastos`, {
+  const response = await fetch(`${BASE_URL}/api/gastos`, { // ✅ FIX
     method: "POST",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}` 
+      "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(gasto),
   });
-  
+
   return handleResponse(response);
 }
