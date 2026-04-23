@@ -191,7 +191,7 @@ export default function Dashboard() {
             ))
           ) : (
             <div className="text-center py-8 text-gray-500">
-              <p>No hay movimientos registrados</p>
+              <p>No hay movimientos registrados aún</p>
             </div>
           )}
         </CardContent>
