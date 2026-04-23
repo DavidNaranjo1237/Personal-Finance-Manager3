@@ -1,5 +1,5 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, TrendingUp, TrendingDown, History, LogOut } from 'lucide-react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router';
+import { Home, TrendingUp, TrendingDown, History, LogOut,  Wallet } from 'lucide-react';
 import { Button } from './ui/button';
 import { useEffect } from 'react';
 
@@ -17,7 +17,6 @@ export default function Layout() {
 
   const handleLogout = () => {
     localStorage.removeItem('userEmail');
-    localStorage.removeItem('token');
     navigate('/');
   };
 
@@ -26,6 +25,7 @@ export default function Layout() {
     { path: '/nuevo-ingreso', icon: TrendingUp, label: 'Ingreso' },
     { path: '/nuevo-gasto', icon: TrendingDown, label: 'Gasto' },
     { path: '/historial', icon: History, label: 'Historial' },
+    { path: '/presupuesto', icon: Wallet, label: 'Presupuesto' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -46,7 +46,6 @@ export default function Layout() {
               </p>
             </div>
           </div>
-
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="size-4 mr-2" />
             Cerrar Sesión
@@ -64,7 +63,7 @@ export default function Layout() {
                   <Button
                     variant={isActive(item.path) ? 'default' : 'ghost'}
                     className={`w-full justify-start ${
-                      isActive(item.path) ? 'bg-blue-500 hover:bg-blue-600 text-white' : ''
+                      isActive(item.path) ? 'bg-blue-500 hover:bg-blue-600' : ''
                     }`}
                   >
                     <item.icon className="size-5 mr-3" />
