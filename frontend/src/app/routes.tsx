@@ -5,10 +5,15 @@ import Dashboard from './pages/Dashboard';
 import NuevoIngreso from './pages/NuevoIngreso';
 import NuevoGasto from './pages/NuevoGasto';
 import Historial from './pages/Historial';
+import Presupuesto from './pages/Presupuesto';
 
 export const router = createBrowserRouter([
   {
     path: '/',
+    element: <Login />,
+  },
+  {
+    path: '/login', // ✅ FIX
     element: <Login />,
   },
   {
@@ -25,6 +30,10 @@ export const router = createBrowserRouter([
       {
         path: '/nuevo-gasto',
         element: <NuevoGasto />,
+      },
+      {
+        path: '/presupuesto',
+        element: <Presupuesto />,
       },
       {
         path: '/historial',
