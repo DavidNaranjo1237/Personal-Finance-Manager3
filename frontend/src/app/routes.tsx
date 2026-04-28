@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -6,11 +6,14 @@ import NuevoIngreso from './pages/NuevoIngreso';
 import NuevoGasto from './pages/NuevoGasto';
 import Historial from './pages/Historial';
 import Presupuesto from './pages/Presupuesto';
-//import path from 'path';
 
 export const router = createBrowserRouter([
   {
     path: '/',
+    element: <Login />,
+  },
+  {
+    path: '/login', // ✅ FIX
     element: <Login />,
   },
   {

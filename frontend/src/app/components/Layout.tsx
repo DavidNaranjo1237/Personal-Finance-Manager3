@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from 'react-router';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, TrendingUp, TrendingDown, History, LogOut,  Wallet } from 'lucide-react';
 import { Button } from './ui/button';
 import { useEffect } from 'react';
