@@ -5,15 +5,19 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { ArrowLeft, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { saveIngreso } from "../api";
+import { MetodoPago } from '../types/types';
+import { METODOS_PAGO } from '../constants/paymentMethods';
 
 export default function NuevoIngreso() {
   const navigate = useNavigate();
   const [monto, setMonto] = useState('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [descripcion, setDescripcion] = useState('');
+  const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,6 +41,11 @@ export default function NuevoIngreso() {
       return;
     }
 
+    if (!metodoPago) {
+      toast.error('Debes seleccionar un método de pago');
+      return;
+    }
+
     // 🔴 Validación sesión (MEJORA CLAVE)
     const userEmail = localStorage.getItem('userEmail');
     const token = localStorage.getItem('token');
@@ -51,6 +60,7 @@ export default function NuevoIngreso() {
       monto: montoNum,
       fecha,
       descripcion,
+      metodoPago,
       usuarioEmail: userEmail,
     };
 
@@ -69,6 +79,7 @@ export default function NuevoIngreso() {
       // 🔄 limpiar formulario
       setMonto('');
       setDescripcion('');
+      setMetodoPago('');
       setFecha(new Date().toISOString().split('T')[0]);
 
       // 🔁 redirigir
@@ -166,6 +177,28 @@ export default function NuevoIngreso() {
                 required
                 disabled={loading}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="metodoPago">
+                Método de Pago <span className="text-red-500">*</span>
+              </Label>
+              <Select
+                value={metodoPago}
+                onValueChange={(value: MetodoPago) => setMetodoPago(value)}
+                disabled={loading}
+              >
+                <SelectTrigger id="metodoPago">
+                  <SelectValue placeholder="Selecciona un método de pago" />
+                </SelectTrigger>
+                <SelectContent>
+                  {METODOS_PAGO.map((metodo) => (
+                    <SelectItem key={metodo.value} value={metodo.value}>
+                      {metodo.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

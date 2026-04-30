@@ -5,6 +5,7 @@ export interface Ingreso {
   monto: number;
   fecha: string;
   descripcion: string;
+  metodoPago: MetodoPago;
   usuarioEmail: string;
 }
 
@@ -14,6 +15,7 @@ export interface Gasto {
   categoria: string;
   fecha: string;
   descripcion: string;
+  metodoPago: MetodoPago;
   usuarioEmail: string;
 }
 
@@ -23,8 +25,15 @@ export interface TransaccionDTO {
   fecha: string;
   descripcion: string;
   categoria?: string; // Solo presente en gastos
+  metodoPago?: MetodoPago;
   tipo: 'INGRESO' | 'GASTO';
 }
+
+export type MetodoPago =
+  | 'CUENTA_BANCARIA'
+  | 'EFECTIVO'
+  | 'TARJETA_CREDITO'
+  | 'OTRO';
 
 export type CategoriaGasto = 
   | 'Alimentación'

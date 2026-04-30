@@ -7,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, TrendingUp, TrendingDown, Filter, Loader2 } from 'lucide-react';
 // Importamos la función real de tu API
 import { fetchHistorial } from "../api";
-import { TransaccionDTO } from '../types/types';
+import { MetodoPago, TransaccionDTO } from '../types/types';
+import { metodoPagoLabel, METODOS_PAGO } from '../constants/paymentMethods';
 
 function formatearMoneda(monto: number): string {
   return new Intl.NumberFormat('es-MX', {
@@ -57,6 +58,8 @@ function TransactionRow({ transaccion }: { transaccion: TransaccionDTO }) {
                 <span className="text-gray-600">{transaccion.categoria}</span>
               </>
             )}
+            <span className="hidden sm:inline">•</span>
+            <span className="text-gray-600">{metodoPagoLabel(transaccion.metodoPago)}</span>
           </div>
         </div>
       </div>
@@ -73,6 +76,7 @@ function TransactionRow({ transaccion }: { transaccion: TransaccionDTO }) {
 export default function Historial() {
   const navigate = useNavigate();
   const [filtroTipo, setFiltroTipo] = useState<'TODOS' | 'INGRESO' | 'GASTO'>('TODOS');
+  const [filtroMetodoPago, setFiltroMetodoPago] = useState<'TODOS' | MetodoPago>('TODOS');
   
   // ESTADOS PARA DATOS REALES
   const [todasLasTransacciones, setTodasLasTransacciones] = useState<TransaccionDTO[]>([]);
@@ -97,9 +101,12 @@ export default function Historial() {
     cargarHistorial();
   }, []);
   
-  const transaccionesFiltradas = filtroTipo === 'TODOS' 
-    ? todasLasTransacciones
-    : todasLasTransacciones.filter(t => t.tipo === filtroTipo);
+  const transaccionesFiltradas = todasLasTransacciones.filter((t) => {
+    const coincideTipo = filtroTipo === 'TODOS' || t.tipo === filtroTipo;
+    const coincideMetodo =
+      filtroMetodoPago === 'TODOS' || t.metodoPago === filtroMetodoPago;
+    return coincideTipo && coincideMetodo;
+  });
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -122,7 +129,7 @@ export default function Historial() {
       {/* Filtros */}
       <Card className="shadow-sm">
         <CardContent className="p-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Filter className="size-5 text-gray-500" />
             <Label className="text-sm font-medium">Filtrar por tipo:</Label>
             <Select value={filtroTipo} onValueChange={(value: any) => setFiltroTipo(value)}>
@@ -133,6 +140,23 @@ export default function Historial() {
                 <SelectItem value="TODOS">Todos</SelectItem>
                 <SelectItem value="INGRESO">Ingresos</SelectItem>
                 <SelectItem value="GASTO">Gastos</SelectItem>
+              </SelectContent>
+            </Select>
+            <Label className="text-sm font-medium">Método:</Label>
+            <Select
+              value={filtroMetodoPago}
+              onValueChange={(value: 'TODOS' | MetodoPago) => setFiltroMetodoPago(value)}
+            >
+              <SelectTrigger className="w-[220px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="TODOS">Todos</SelectItem>
+                {METODOS_PAGO.map((metodo) => (
+                  <SelectItem key={metodo.value} value={metodo.value}>
+                    {metodo.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
