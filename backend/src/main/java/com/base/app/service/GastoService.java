@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,30 +18,21 @@ public class GastoService {
     @Autowired
     private IngresoService ingresoService;
 
-    // Lista en memoria para persistencia temporal (mientras el Docker esté encendido)
     private final List<Gasto> gastos = new ArrayList<>();
 
-    /**
-     * MODIFICACIÓN: El balance ya no empieza en 1000. 
-     * Se calcula dinámicamente para que sea $0.00 al iniciar.
-     */
     public double obtenerBalanceTotal() {
-        // Sumamos todos los ingresos actuales
         double totalIngresos = ingresoService.obtenerIngresos().stream()
                 .mapToDouble(Ingreso::getMonto)
                 .sum();
 
-        // Sumamos todos los gastos guardados en la lista
         double totalGastos = gastos.stream()
                 .mapToDouble(Gasto::getMonto)
                 .sum();
 
-        // El balance real es la diferencia
         return totalIngresos - totalGastos;
     }
 
     public String guardarGasto(Gasto gasto) {
-        // Validaciones de seguridad
         if (gasto.getMonto() == null || gasto.getMonto() <= 0) {
             throw new IllegalArgumentException("El monto debe ser mayor a cero.");
         }
@@ -49,15 +41,10 @@ public class GastoService {
             throw new IllegalArgumentException("La fecha no puede ser futura.");
         }
 
-        // Generar ID manual basado en el tamaño de la lista
         gasto.setId((long) (gastos.size() + 1));
-
-        // Asociar al usuario demo
-        gasto.setUsuarioId(1L); 
-
-        // Guardar en la lista (memoria del Docker)
+        gasto.setUsuarioId(1L);
         gastos.add(gasto);
-        
+
         return "Registro exitoso";
     }
 
@@ -76,7 +63,6 @@ public class GastoService {
     public List<TransaccionDTO> obtenerHistorialTransacciones(List<Ingreso> ingresos) {
         List<TransaccionDTO> transacciones = new ArrayList<>();
 
-        // Convertir ingresos a DTO
         transacciones.addAll(ingresos.stream().map(ingreso -> {
             TransaccionDTO dto = new TransaccionDTO();
             dto.setId(ingreso.getId());
@@ -87,7 +73,6 @@ public class GastoService {
             return dto;
         }).collect(Collectors.toList()));
 
-        // Convertir gastos a DTO
         transacciones.addAll(gastos.stream().map(gasto -> {
             TransaccionDTO dto = new TransaccionDTO();
             dto.setId(gasto.getId());
@@ -99,9 +84,16 @@ public class GastoService {
             return dto;
         }).collect(Collectors.toList()));
 
-        // Ordenar historial por fecha (más reciente primero)
         transacciones.sort((t1, t2) -> t2.getFecha().compareTo(t1.getFecha()));
 
         return transacciones;
+    }
+
+    public double obtenerGastosMes(YearMonth mes, String categoria) {
+        return gastos.stream()
+                .filter(g -> YearMonth.from(g.getFecha()).equals(mes))
+                .filter(g -> categoria == null || categoria.equalsIgnoreCase(g.getCategoria()))
+                .mapToDouble(Gasto::getMonto)
+                .sum();
     }
 }
