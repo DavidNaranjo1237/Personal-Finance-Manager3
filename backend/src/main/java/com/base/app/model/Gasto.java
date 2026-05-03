@@ -13,7 +13,7 @@ public class Gasto {
 
     @NotNull(message = "El monto es obligatorio.")
     @Positive(message = "El monto debe ser mayor a cero.")
-    private Double monto; // Correcto: Permite validación @NotNull
+    private Double monto;
 
     @NotBlank(message = "La categoría es obligatoria.")
     private String categoria;
@@ -26,69 +26,39 @@ public class Gasto {
 
     private Long usuarioId;
 
-    // --- CONSTRUCTORES ---
+    @NotBlank(message = "El método de pago es obligatorio.")
+    private String metodoPago;
 
-    // Constructor vacío obligatorio para Jackson (manejo de JSON)
-    public Gasto() {
-    }
+    public Gasto() {}
 
-    // Constructor completo para facilitar pruebas o instanciación manual
-    public Gasto(Long id, Double monto, String categoria, LocalDate fecha, String descripcion, Long usuarioId) {
+    public Gasto(Long id, Double monto, String categoria, LocalDate fecha, String descripcion, Long usuarioId, String metodoPago) {
         this.id = id;
         this.monto = monto;
         this.categoria = categoria;
         this.fecha = fecha;
         this.descripcion = descripcion;
         this.usuarioId = usuarioId;
+        this.metodoPago = metodoPago;
     }
 
-    // --- GETTERS AND SETTERS ---
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public Double getMonto() { return monto; }
+    public void setMonto(Double monto) { this.monto = monto; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 
-    public Double getMonto() {
-        return monto;
-    }
+    public LocalDate getFecha() { return fecha; }
+    public void setFecha(LocalDate fecha) { this.fecha = fecha; }
 
-    public void setMonto(Double monto) {
-        this.monto = monto;
-    }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public String getCategoria() {
-        return categoria;
-    }
+    public Long getUsuarioId() { return usuarioId; }
+    public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
-
-    public LocalDate getFecha() {
-        return fecha;
-    }
-
-    public void setFecha(LocalDate fecha) {
-        this.fecha = fecha;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
-    }
-
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public Long getUsuarioId() {
-        return usuarioId;
-    }
-
-    public void setUsuarioId(Long usuarioId) {
-        this.usuarioId = usuarioId;
-    }
+    public String getMetodoPago() { return metodoPago; }
+    public void setMetodoPago(String metodoPago) { this.metodoPago = metodoPago; }
 }

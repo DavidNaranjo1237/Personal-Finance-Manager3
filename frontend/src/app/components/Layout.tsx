@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, TrendingUp, TrendingDown, History, LogOut,  Wallet } from 'lucide-react';
+import { Home, TrendingUp, TrendingDown, History, LogOut, Wallet, PlusCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { useEffect } from 'react';
 
@@ -22,6 +22,7 @@ export default function Layout() {
 
   const navItems = [
     { path: '/dashboard', icon: Home, label: 'Inicio' },
+    { path: '/nueva-transaccion', icon: PlusCircle, label: 'Nueva' },
     { path: '/nuevo-ingreso', icon: TrendingUp, label: 'Ingreso' },
     { path: '/nuevo-gasto', icon: TrendingDown, label: 'Gasto' },
     { path: '/historial', icon: History, label: 'Historial' },
