@@ -24,9 +24,11 @@ public class GastoService {
         double totalIngresos = ingresoService.obtenerIngresos().stream()
                 .mapToDouble(Ingreso::getMonto)
                 .sum();
+
         double totalGastos = gastos.stream()
                 .mapToDouble(Gasto::getMonto)
                 .sum();
+
         return totalIngresos - totalGastos;
     }
 
