@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { TrendingUp, TrendingDown, Wallet, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wallet, Loader2, PlusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { TransaccionDTO } from '../types/types';
@@ -123,7 +123,15 @@ export default function Dashboard() {
 
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Panel Principal</h2>
-        {cargando && <Loader2 className="size-5 animate-spin text-blue-500" />}
+        <div className="flex items-center gap-2">
+          <Link to="/nueva-transaccion">
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <PlusCircle className="mr-2 size-4" />
+              Nueva Transacción
+            </Button>
+          </Link>
+          {cargando && <Loader2 className="size-5 animate-spin text-blue-500" />}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

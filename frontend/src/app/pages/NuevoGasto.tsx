@@ -8,8 +8,9 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { ArrowLeft, TrendingDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { CategoriaGasto } from '../types/types';
+import { CategoriaGasto, MetodoPago } from '../types/types';
 import { saveGasto } from '../api'; 
+import { METODOS_PAGO } from '../constants/paymentMethods';
 
 const CATEGORIAS: CategoriaGasto[] = [
   'Alimentación',
@@ -26,6 +27,7 @@ export default function NuevoGasto() {
   const [categoria, setCategoria] = useState<string>('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
   const [descripcion, setDescripcion] = useState('');
+  const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('');
   const [enviando, setEnviando] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,6 +57,11 @@ export default function NuevoGasto() {
       return;
     }
 
+    if (!metodoPago) {
+      toast.error('Debes seleccionar un método de pago');
+      return;
+    }
+
     // 🔴 Validación sesión (CLAVE)
     const token = localStorage.getItem('token');
     const userEmail = localStorage.getItem('userEmail');
@@ -69,7 +76,8 @@ export default function NuevoGasto() {
       monto: montoNum,
       categoria,
       fecha,
-      descripcion
+      descripcion,
+      metodoPago,
     };
 
     setEnviando(true);
@@ -188,6 +196,26 @@ export default function NuevoGasto() {
                 required
                 disabled={enviando}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="metodoPago">Método de Pago *</Label>
+              <Select
+                value={metodoPago}
+                onValueChange={(value: MetodoPago) => setMetodoPago(value)}
+                disabled={enviando}
+              >
+                <SelectTrigger id="metodoPago">
+                  <SelectValue placeholder="Selecciona un método de pago" />
+                </SelectTrigger>
+                <SelectContent>
+                  {METODOS_PAGO.map((metodo) => (
+                    <SelectItem key={metodo.value} value={metodo.value}>
+                      {metodo.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

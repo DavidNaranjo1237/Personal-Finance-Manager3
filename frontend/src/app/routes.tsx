@@ -6,6 +6,7 @@ import NuevoIngreso from './pages/NuevoIngreso';
 import NuevoGasto from './pages/NuevoGasto';
 import Historial from './pages/Historial';
 import Presupuesto from './pages/Presupuesto';
+import NuevaTransaccion from './pages/NuevaTransaccion';
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
       {
         path: '/historial',
         element: <Historial />,
+      },
+      {
+        path: '/nueva-transaccion',
+        element: <NuevaTransaccion />,
       },
     ],
   },
