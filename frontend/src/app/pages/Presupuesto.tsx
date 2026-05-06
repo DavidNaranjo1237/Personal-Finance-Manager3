@@ -29,7 +29,7 @@ export default function PresupuestoPage() {
 
 useEffect(() => {
   const cargarGastos = () => {
-    fetch('http://localhost:8080/api/gastos')
+    fetch('https://personal-finance-manager3.onrender.com/api/gastos')
       .then(res => res.json())
       .then(data => setGastos(data))
       .catch(err => console.error(err));
@@ -39,7 +39,6 @@ useEffect(() => {
 
   // 🔥 se ejecuta cada vez que vuelves a la pestaña
   window.addEventListener('focus', cargarGastos);
-
   return () => window.removeEventListener('focus', cargarGastos);
 }, []);
 
