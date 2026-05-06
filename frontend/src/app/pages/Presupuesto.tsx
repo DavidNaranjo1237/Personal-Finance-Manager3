@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState,useEffect } from 'react';
 import {
   AlertTriangle,
   Bus,
@@ -20,21 +20,70 @@ type SavedBudget = {
   category: string;
   limit: number;
 };
-
-const categorySpending = [
-  { name: 'Alimentación', spent: 180, icon: UtensilsCrossed },
-  { name: 'Transporte', spent: 50, icon: Bus },
-  { name: 'Salud', spent: 120, icon: HeartPulse },
-  { name: 'Entretenimiento', spent: 90, icon: Film },
-  { name: 'Educación', spent: 70, icon: GraduationCap },
-  { name: 'Otros', spent: 30, icon: Shapes },
-];
-
 export default function PresupuestoPage() {
   const [limit, setLimit] = useState('');
   const [budgetType, setBudgetType] = useState<BudgetType>('global');
   const [category, setCategory] = useState('');
   const [savedBudget, setSavedBudget] = useState<SavedBudget | null>(null);
+  const [gastos, setGastos] = useState<any[]>([]);
+
+useEffect(() => {
+  const cargarGastos = () => {
+    fetch('http://localhost:8080/api/gastos')
+      .then(res => res.json())
+      .then(data => setGastos(data))
+      .catch(err => console.error(err));
+  };
+
+  cargarGastos();
+
+  // 🔥 se ejecuta cada vez que vuelves a la pestaña
+  window.addEventListener('focus', cargarGastos);
+
+  return () => window.removeEventListener('focus', cargarGastos);
+}, []);
+
+useEffect(() => {
+  const saved = localStorage.getItem('presupuesto');
+
+  if (saved) {
+    setSavedBudget(JSON.parse(saved));
+  }
+}, []);
+
+const categorySpending = useMemo(() => {
+  const base = [
+    { name: 'Alimentación', icon: UtensilsCrossed },
+    { name: 'Transporte', icon: Bus },
+    { name: 'Salud', icon: HeartPulse },
+    { name: 'Entretenimiento', icon: Film },
+    { name: 'Educación', icon: GraduationCap },
+    { name: 'Otros', icon: Shapes },
+  ];
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  return base.map(cat => {
+    const total = gastos
+      .filter(g => {
+        const fecha = new Date(g.fecha);
+        return (
+          fecha.getMonth() === currentMonth &&
+          fecha.getFullYear() === currentYear &&
+          (g.categoria || 'Otros').toLowerCase() === cat.name.toLowerCase()
+        );
+      })
+      .reduce((acc, g) => acc + (g.monto || 0), 0);
+
+    return {
+      ...cat,
+      spent: total,
+    };
+  });
+}, [gastos]);
+
 
   const currentMonth = useMemo(() => {
     return new Date().toLocaleDateString('es-CO', {
@@ -88,6 +137,17 @@ export default function PresupuestoPage() {
 
   const handleSaveBudget = () => {
     const parsedLimit = Number(limit);
+    const presupuesto = {
+  month: currentMonth,
+  type: budgetType,
+  category: budgetType === 'category' ? category : '',
+  limit: parsedLimit,
+};
+
+setSavedBudget(presupuesto);
+
+
+localStorage.setItem('presupuesto', JSON.stringify(presupuesto));
 
     if (!parsedLimit || parsedLimit <= 0) return;
 
