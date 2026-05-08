@@ -35,28 +35,28 @@ export async function login(email: any, password: any) {
 
 export async function fetchIngresos(token: string) {
   const response = await fetch(`${BASE_URL}/api/ingresos`, { // ✅ FIX
-    headers: { Authorization: `Bearer ${token}` },
+   // headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function fetchGastos(token: string) {
   const response = await fetch(`${BASE_URL}/api/gastos`, { // ✅ FIX
-    headers: { Authorization: `Bearer ${token}` },
+   // headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function fetchHistorial(token: string) {
   const response = await fetch(`${BASE_URL}/api/gastos/historial`, { // ✅ FIX
-    headers: { Authorization: `Bearer ${token}` },
+  //  headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
 
 export async function fetchBalance(token: string) {
   const response = await fetch(`${BASE_URL}/api/gastos/balance`, { // ✅ FIX
-    headers: { Authorization: `Bearer ${token}` },
+   // headers: { Authorization: `Bearer ${token}` },
   });
   return handleResponse(response);
 }
@@ -68,7 +68,7 @@ export async function saveIngreso(ingreso: any, token: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
+     // "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(ingreso),
   });
@@ -81,7 +81,7 @@ export async function saveGasto(gasto: any, token: string) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`
+    //  "Authorization": `Bearer ${token}`
     },
     body: JSON.stringify(gasto),
   });

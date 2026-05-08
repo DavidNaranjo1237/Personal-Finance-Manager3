@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ArrowLeft, TrendingDown, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CategoriaGasto, MetodoPago } from '../types/types';
-import { saveGasto } from '../api'; 
+import { saveGasto } from '../api';
 import { METODOS_PAGO } from '../constants/paymentMethods';
 
 const CATEGORIAS: CategoriaGasto[] = [
@@ -35,19 +35,16 @@ export default function NuevoGasto() {
 
     const montoNum = parseFloat(monto);
 
-    // 🔴 Validación monto
     if (!monto || isNaN(montoNum) || montoNum <= 0) {
       toast.error('El monto debe ser mayor a 0');
       return;
     }
 
-    // 🔴 Validación categoría
     if (!categoria) {
       toast.error('Debes seleccionar una categoría');
       return;
     }
 
-    // 🔴 Validación fecha (extra)
     const fechaSeleccionada = new Date(fecha);
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -62,7 +59,6 @@ export default function NuevoGasto() {
       return;
     }
 
-    // 🔴 Validación sesión (CLAVE)
     const token = localStorage.getItem('token');
     const userEmail = localStorage.getItem('userEmail');
 
@@ -81,9 +77,20 @@ export default function NuevoGasto() {
     };
 
     setEnviando(true);
+    console.log('ENVIANDO GASTO:', nuevoGasto);
 
     try {
-      await saveGasto(nuevoGasto, token); 
+      await saveGasto(nuevoGasto, token);
+
+      // Persistencia MVP en localStorage
+      const gastosLocales = JSON.parse(localStorage.getItem('gastos') || '[]');
+      gastosLocales.push({
+        ...nuevoGasto,
+        id: Date.now(),
+      });
+      localStorage.setItem('gastos', JSON.stringify(gastosLocales));
+
+      localStorage.setItem('updatePresupuesto', 'true');
 
       toast.success('Gasto registrado', {
         description: `${categoria}: ${new Intl.NumberFormat('es-MX', {
@@ -92,16 +99,27 @@ export default function NuevoGasto() {
         }).format(montoNum)}`,
       });
 
-      // 🔁 Redirección más rápida
       setTimeout(() => navigate('/dashboard'), 800);
-
     } catch (error: any) {
-      console.error("Error al conectar con el servidor:", error);
+      console.error('Error al conectar con el servidor:', error);
 
-      toast.error('Error al guardar el gasto', {
-        description: error?.message || 'Verifica que el backend esté activo',
+      // fallback MVP si backend falla
+      const gastosLocales = JSON.parse(localStorage.getItem('gastos') || '[]');
+      gastosLocales.push({
+        ...nuevoGasto,
+        id: Date.now(),
+      });
+      localStorage.setItem('gastos', JSON.stringify(gastosLocales));
+      localStorage.setItem('updatePresupuesto', 'true');
+
+      toast.success('Gasto registrado localmente', {
+        description: `${categoria}: ${new Intl.NumberFormat('es-MX', {
+          style: 'currency',
+          currency: 'MXN',
+        }).format(montoNum)}`,
       });
 
+      setTimeout(() => navigate('/dashboard'), 800);
     } finally {
       setEnviando(false);
     }
@@ -109,7 +127,6 @@ export default function NuevoGasto() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-
       <div className="flex items-center gap-3">
         <Button
           variant="ghost"
@@ -146,7 +163,6 @@ export default function NuevoGasto() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-
             <div className="space-y-2">
               <Label htmlFor="monto">Monto *</Label>
 
@@ -178,7 +194,9 @@ export default function NuevoGasto() {
 
                 <SelectContent>
                   {CATEGORIAS.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -200,6 +218,7 @@ export default function NuevoGasto() {
 
             <div className="space-y-2">
               <Label htmlFor="metodoPago">Método de Pago *</Label>
+
               <Select
                 value={metodoPago}
                 onValueChange={(value: MetodoPago) => setMetodoPago(value)}
@@ -208,6 +227,7 @@ export default function NuevoGasto() {
                 <SelectTrigger id="metodoPago">
                   <SelectValue placeholder="Selecciona un método de pago" />
                 </SelectTrigger>
+
                 <SelectContent>
                   {METODOS_PAGO.map((metodo) => (
                     <SelectItem key={metodo.value} value={metodo.value}>
@@ -233,7 +253,6 @@ export default function NuevoGasto() {
             </div>
 
             <div className="flex gap-3 pt-4">
-
               <Button
                 type="button"
                 variant="outline"
@@ -258,9 +277,7 @@ export default function NuevoGasto() {
                   'Guardar Gasto'
                 )}
               </Button>
-
             </div>
-
           </form>
         </CardContent>
       </Card>

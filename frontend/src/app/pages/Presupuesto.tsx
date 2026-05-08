@@ -27,20 +27,51 @@ export default function PresupuestoPage() {
   const [savedBudget, setSavedBudget] = useState<SavedBudget | null>(null);
   const [gastos, setGastos] = useState<any[]>([]);
 
+  const API_URL =
+  window.location.hostname === 'localhost'
+    ? 'http://localhost:8080'
+    : 'https://personal-finance-manager3.onrender.com';
+
 useEffect(() => {
   const cargarGastos = () => {
-    fetch('https://personal-finance-manager3.onrender.com/api/gastos')
-      .then(res => res.json())
-      .then(data => setGastos(data))
-      .catch(err => console.error(err));
+    fetch(`${API_URL}/api/gastos`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('GASTOS BACKEND:', data);
+
+        if (Array.isArray(data) && data.length > 0) {
+          setGastos(data);
+          localStorage.setItem('gastos', JSON.stringify(data));
+        } else {
+          const gastosLocales = JSON.parse(localStorage.getItem('gastos') || '[]');
+          console.log('GASTOS LOCAL:', gastosLocales);
+          setGastos(gastosLocales);
+        }
+      })
+      .catch(() => {
+        const gastosLocales = JSON.parse(localStorage.getItem('gastos') || '[]');
+        setGastos(gastosLocales);
+      });
   };
 
   cargarGastos();
 
-  // 🔥 se ejecuta cada vez que vuelves a la pestaña
+  const actualizar = () => {
+    if (localStorage.getItem('updatePresupuesto') === 'true') {
+      cargarGastos();
+      localStorage.removeItem('updatePresupuesto');
+    }
+  };
+
   window.addEventListener('focus', cargarGastos);
-  return () => window.removeEventListener('focus', cargarGastos);
+  window.addEventListener('storage', actualizar);
+
+  return () => {
+    window.removeEventListener('focus', cargarGastos);
+    window.removeEventListener('storage', actualizar);
+  };
 }, []);
+
 
 useEffect(() => {
   const saved = localStorage.getItem('presupuesto');
@@ -60,21 +91,26 @@ const categorySpending = useMemo(() => {
     { name: 'Otros', icon: Shapes },
   ];
 
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-
-  return base.map(cat => {
+  return base.map((cat) => {
     const total = gastos
-      .filter(g => {
-        const fecha = new Date(g.fecha);
-        return (
-          fecha.getMonth() === currentMonth &&
-          fecha.getFullYear() === currentYear &&
-          (g.categoria || 'Otros').toLowerCase() === cat.name.toLowerCase()
-        );
+      .filter((g) => {
+        if (!g?.fecha) return false;
+
+        const categoriaBackend = (g.categoria || 'Otros')
+          .trim()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase();
+
+        const categoriaFrontend = cat.name
+          .trim()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase();
+
+        return categoriaBackend === categoriaFrontend;
       })
-      .reduce((acc, g) => acc + (g.monto || 0), 0);
+      .reduce((acc, g) => acc + Number(g.monto || 0), 0);
 
     return {
       ...cat,
@@ -82,7 +118,6 @@ const categorySpending = useMemo(() => {
     };
   });
 }, [gastos]);
-
 
   const currentMonth = useMemo(() => {
     return new Date().toLocaleDateString('es-CO', {
@@ -103,7 +138,7 @@ const categorySpending = useMemo(() => {
     );
 
     return selected?.spent ?? 0;
-  }, [savedBudget]);
+  }, [savedBudget,categorySpending]);
 
   const percentage = useMemo(() => {
     if (!savedBudget || savedBudget.limit <= 0) return 0;
@@ -132,31 +167,23 @@ const categorySpending = useMemo(() => {
     return categorySpending.filter(
       (item) => item.name === savedBudget.category
     );
-  }, [savedBudget]);
+  }, [savedBudget,categorySpending]);
 
-  const handleSaveBudget = () => {
-    const parsedLimit = Number(limit);
-    const presupuesto = {
-  month: currentMonth,
-  type: budgetType,
-  category: budgetType === 'category' ? category : '',
-  limit: parsedLimit,
-};
+const handleSaveBudget = () => {
+  const parsedLimit = Number(limit);
 
-setSavedBudget(presupuesto);
+  if (!parsedLimit || parsedLimit <= 0) return;
 
-
-localStorage.setItem('presupuesto', JSON.stringify(presupuesto));
-
-    if (!parsedLimit || parsedLimit <= 0) return;
-
-    setSavedBudget({
-      month: currentMonth,
-      type: budgetType,
-      category: budgetType === 'category' ? category : '',
-      limit: parsedLimit,
-    });
+  const presupuesto = {
+    month: currentMonth,
+    type: budgetType,
+    category: budgetType === 'category' ? category : '',
+    limit: parsedLimit,
   };
+
+  setSavedBudget(presupuesto);
+  localStorage.setItem('presupuesto', JSON.stringify(presupuesto));
+};
 
   const progressColor =
     status === 'exceeded'
@@ -388,4 +415,5 @@ localStorage.setItem('presupuesto', JSON.stringify(presupuesto));
       )}
     </div>
   );
-}
+ }
+

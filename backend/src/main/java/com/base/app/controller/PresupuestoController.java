@@ -13,8 +13,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/presupuestos")
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*",
-        methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS})
+@CrossOrigin(origins = "http://localhost:5173", allowedHeaders = "*")
 public class PresupuestoController {
 
     @Autowired
