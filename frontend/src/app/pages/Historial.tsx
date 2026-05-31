@@ -25,8 +25,11 @@ function formatearFecha(fecha: string): string {
   });
 }
 
-function TransactionRow({ transaccion }: { transaccion: TransaccionDTO }) {
-  const isIngreso = transaccion.tipo === 'INGRESO';
+function TransactionRow({transaccion, onEditar, onEliminar,}: {
+  transaccion: TransaccionDTO;
+  onEditar: (t: TransaccionDTO) => void;
+  onEliminar: (id: number) => void;
+}) { const isIngreso = transaccion.tipo === 'INGRESO';
   
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-xl border hover:shadow-sm transition-shadow">
@@ -50,25 +53,49 @@ function TransactionRow({ transaccion }: { transaccion: TransaccionDTO }) {
               {transaccion.tipo}
             </Badge>
           </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-500">
             <span>{formatearFecha(transaccion.fecha)}</span>
+
             {transaccion.categoria && (
               <>
                 <span className="hidden sm:inline">•</span>
                 <span className="text-gray-600">{transaccion.categoria}</span>
               </>
             )}
+
             <span className="hidden sm:inline">•</span>
-            <span className="text-gray-600">{metodoPagoLabel(transaccion.metodoPago)}</span>
+
+            <span className="text-gray-600">
+              {metodoPagoLabel(transaccion.metodoPago)}
+            </span>
           </div>
         </div>
       </div>
-      
-      <p className={`text-lg font-semibold ml-4 shrink-0 ${
-        isIngreso ? 'text-green-600' : 'text-red-600'
-      }`}>
-        {isIngreso ? '+' : '-'}{formatearMoneda(transaccion.monto)}
-      </p>
+
+      <div className="ml-4 flex flex-col items-end gap-2 shrink-0">
+        <p className={`text-lg font-semibold ${
+          isIngreso ? 'text-green-600' : 'text-red-600'
+        }`}>
+          {isIngreso ? '+' : '-'}{formatearMoneda(transaccion.monto)}
+        </p>
+
+          <button
+            onClick={() => {
+              console.log("CLICK EDITAR");
+              onEditar(transaccion);
+            }}
+            className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => onEliminar(transaccion.id)}
+            className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+          >
+            Eliminar
+          </button>
+      </div>
     </div>
   );
 }
@@ -81,6 +108,31 @@ export default function Historial() {
   // ESTADOS PARA DATOS REALES
   const [todasLasTransacciones, setTodasLasTransacciones] = useState<TransaccionDTO[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [transaccionEditando, setTransaccionEditando] = useState<TransaccionDTO | null>(null);
+
+    const guardarCambios = () => {
+      if (!transaccionEditando) return;
+
+      if (
+        !transaccionEditando.descripcion ||
+        transaccionEditando.monto <= 0
+      ) {
+        alert("Completa los campos obligatorios");
+        return;
+      }
+
+      const actualizadas = todasLasTransacciones.map((t) =>
+        t.id === transaccionEditando.id
+          ? transaccionEditando
+          : t
+      );
+
+      setTodasLasTransacciones(actualizadas);
+
+      setTransaccionEditando(null);
+
+      alert("Transacción actualizada");
+    };
 
   // EFECTO PARA CARGAR DESDE EL BACKEND
   useEffect(() => {
@@ -171,9 +223,29 @@ export default function Historial() {
         </div>
       ) : transaccionesFiltradas.length > 0 ? (
         <div className="space-y-3">
-          {transaccionesFiltradas.map((transaccion) => (
-            <TransactionRow key={transaccion.id} transaccion={transaccion} />
-          ))}
+            {transaccionesFiltradas.map((transaccion) => (
+          <TransactionRow
+            key={transaccion.id}
+            transaccion={transaccion}
+            onEditar={(t) => {
+              console.log("TRANSACCION A EDITAR", t);
+              setTransaccionEditando(t);
+            }}
+            onEliminar={(id) => {
+              const confirmar = confirm("¿Eliminar transacción?");
+
+              if (!confirmar) return;
+
+              const actualizadas = todasLasTransacciones.filter(
+                (t) => t.id !== id
+              );
+
+              setTodasLasTransacciones(actualizadas);
+
+              alert("Transacción eliminada");
+      }}
+          />
+        ))}
         </div>
       ) : (
         <Card className="shadow-sm">
@@ -203,7 +275,116 @@ export default function Historial() {
             </div>
           </CardContent>
         </Card>
-      )}
+        )}
+
+       {transaccionEditando && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+              <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+                <h3 className="mb-4 text-xl font-bold text-blue-600">
+                  Editar transacción
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1 block font-semibold">
+                      Descripción
+                    </label>
+
+                    <input
+                      type="text"
+                      value={transaccionEditando.descripcion}
+                      onChange={(e) =>
+                        setTransaccionEditando({
+                          ...transaccionEditando,
+                          descripcion: e.target.value,
+                        })
+                      }
+                      className="w-full rounded border p-2"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1 block font-semibold">
+                      Monto
+                    </label>
+
+                    <input
+                      type="number"
+                      value={transaccionEditando.monto}
+                      onChange={(e) =>
+                        setTransaccionEditando({
+                          ...transaccionEditando,
+                          monto: Number(e.target.value),
+                        })
+                      }
+                      className="w-full rounded border p-2"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                  <label className="font-semibold">
+                    Tipo
+                  </label>
+
+                  <select
+                    value={transaccionEditando.tipo}
+                    onChange={(e) =>
+                      setTransaccionEditando({
+                        ...transaccionEditando,
+                        tipo: e.target.value as 'INGRESO' | 'GASTO',
+                      })
+                    }
+                    className="w-full rounded border p-2"
+                  >
+                    <option value="INGRESO">INGRESO</option>
+                    <option value="GASTO">GASTO</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                <label className="font-semibold">
+                  Método de pago
+                </label>
+
+                    <select
+                      value={transaccionEditando.metodoPago}
+                      onChange={(e) =>
+                        setTransaccionEditando({
+                          ...transaccionEditando,
+                          metodoPago: e.target.value as MetodoPago,
+                        })
+                      }
+                      className="w-full rounded border p-2"
+                    >
+                      {METODOS_PAGO.map((metodo) => (
+                        <option
+                          key={metodo.value}
+                          value={metodo.value}
+                        >
+                          {metodo.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    onClick={guardarCambios}
+                    className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+                  >
+                    Guardar cambios
+                  </button>
+
+                    <button
+                      onClick={() => setTransaccionEditando(null)}
+                      className="rounded bg-gray-500 px-4 py-2 text-white hover:bg-gray-600"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
     </div>
   );
 }
@@ -211,3 +392,5 @@ export default function Historial() {
 function Label({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return <span className={className}>{children}</span>;
 }
+
+//feat: actualizar vista historial HU07
