@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -92,6 +93,49 @@ public class GastoService {
                 .filter(g -> YearMonth.from(g.getFecha()).equals(mes))
                 .filter(g -> categoria == null || categoria.equalsIgnoreCase(g.getCategoria()))
                 .mapToDouble(Gasto::getMonto)
+                .sum();
+    }
+
+    // HU07: Editar gasto por id
+    public Map<String, String> editarGasto(Long id, Gasto datos) {
+        Gasto gasto = gastos.stream()
+                .filter(g -> g.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Gasto no encontrado con id: " + id));
+
+        if (datos.getMonto() != null && datos.getMonto() > 0) {
+            gasto.setMonto(datos.getMonto());
+        }
+        if (datos.getCategoria() != null && !datos.getCategoria().isBlank()) {
+            gasto.setCategoria(datos.getCategoria());
+        }
+        if (datos.getFecha() != null) {
+            gasto.setFecha(datos.getFecha());
+        }
+        if (datos.getDescripcion() != null) {
+            gasto.setDescripcion(datos.getDescripcion());
+        }
+        if (datos.getMetodoPago() != null) {
+            gasto.setMetodoPago(datos.getMetodoPago());
+        }
+        return Map.of("mensaje", "Gasto actualizado correctamente");
+    }
+
+    // HU07: Eliminar gasto por id
+    public Map<String, String> eliminarGasto(Long id) {
+        boolean removed = gastos.removeIf(g -> g.getId().equals(id));
+        if (!removed) {
+            throw new RuntimeException("Gasto no encontrado con id: " + id);
+        }
+        return Map.of("mensaje", "Gasto eliminado correctamente");
+    }
+
+    // HU08: Total gastado por categoria (usado por PresupuestoService)
+    public Double getTotalPorCategoria(String categoria) {
+        return gastos.stream()
+                .filter(g -> g.getCategoria() != null &&
+                             g.getCategoria().equalsIgnoreCase(categoria))
+                .mapToDouble(g -> g.getMonto() != null ? g.getMonto() : 0)
                 .sum();
     }
 }

@@ -1,5 +1,6 @@
 package com.base.app.service;
 
+import com.base.app.dto.AlertaPresupuestoDTO;
 import com.base.app.dto.PresupuestoResponseDTO;
 import com.base.app.model.Presupuesto;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,5 +87,34 @@ public class PresupuestoService {
         if (c1 == null && c2 == null) return true;
         if (c1 == null || c2 == null) return false;
         return c1.equalsIgnoreCase(c2);
+    }
+
+    // HU08: Alertas activas
+    public List<AlertaPresupuestoDTO> getAlertas() {
+        List<AlertaPresupuestoDTO> alertas = new ArrayList<>();
+
+        for (Presupuesto p : presupuestos) {
+            double gastado = gastoService.getTotalPorCategoria(p.getCategoria());
+            double disponible = p.getLimite() - gastado;
+            double porcentaje = p.getLimite() > 0 ? (gastado / p.getLimite()) * 100 : 0;
+
+            String tipoAlerta;
+            if (porcentaje >= 100) {
+                tipoAlerta = "PRESUPUESTO_EXCEDIDO";
+            } else if (porcentaje >= 80) {
+                tipoAlerta = "ALERTA_PREVENTIVA";
+            } else {
+                tipoAlerta = "SIN_ALERTA";
+            }
+
+            alertas.add(new AlertaPresupuestoDTO(
+                    p.getCategoria(),
+                    porcentaje,
+                    disponible,
+                    tipoAlerta
+            ));
+        }
+
+        return alertas;
     }
 }

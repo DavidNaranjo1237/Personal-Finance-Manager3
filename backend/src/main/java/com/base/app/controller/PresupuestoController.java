@@ -1,5 +1,6 @@
 package com.base.app.controller;
 
+import com.base.app.dto.AlertaPresupuestoDTO;
 import com.base.app.dto.PresupuestoResponseDTO;
 import com.base.app.model.Presupuesto;
 import com.base.app.service.PresupuestoService;
@@ -34,5 +35,11 @@ public class PresupuestoController {
     @GetMapping("/estado")
     public ResponseEntity<List<PresupuestoResponseDTO>> obtenerEstadoPresupuestos() {
         return ResponseEntity.ok(presupuestoService.obtenerEstadoPresupuestos());
+    }
+
+    // HU08: Alertas activas
+    @GetMapping("/alertas")
+    public ResponseEntity<List<AlertaPresupuestoDTO>> getAlertas() {
+        return ResponseEntity.ok(presupuestoService.getAlertas());
     }
 }

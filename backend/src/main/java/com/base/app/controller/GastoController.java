@@ -17,7 +17,7 @@ import java.util.Map;
  * Mantenemos CrossOrigin aquí por seguridad, aunque SecurityConfig ya lo maneje globalmente.
  * Esto asegura que React (puerto 3000) pueda realizar peticiones sin bloqueos de navegador.
  */
-@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.OPTIONS})
+@CrossOrigin(origins = "http://localhost:3000", allowedHeaders = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
 public class GastoController {
 
     @Autowired
@@ -55,7 +55,25 @@ public class GastoController {
     @GetMapping("/historial")
     public ResponseEntity<List<TransaccionDTO>> obtenerHistorialTransacciones() {
         // Método optimizado para evitar errores 403 al no requerir cuerpo en el GET
-        List<TransaccionDTO> historial = gastoService.obtenerHistorialTransaccionesCompleto(); 
+        List<TransaccionDTO> historial = gastoService.obtenerHistorialTransaccionesCompleto();
         return ResponseEntity.ok(historial);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editarGasto(@PathVariable Long id, @RequestBody Gasto datos) {
+        try {
+            return ResponseEntity.ok(gastoService.editarGasto(id, datos));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarGasto(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(gastoService.eliminarGasto(id));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
