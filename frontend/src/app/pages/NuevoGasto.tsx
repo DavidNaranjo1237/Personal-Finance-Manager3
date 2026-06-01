@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -6,12 +6,25 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { ArrowLeft, TrendingDown, Loader2 } from 'lucide-react';
+import { ArrowLeft, TrendingDown, Loader2, AlertTriangle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { CategoriaGasto, MetodoPago } from '../types/types';
 import { saveGasto } from '../api';
 import { METODOS_PAGO } from '../constants/paymentMethods';
 
+//  Tipos locales para presupuesto 
+type BudgetType = 'global' | 'category';
+
+type SavedBudget = {
+  month: string;
+  type: BudgetType;
+  category: string;
+  limit: number;
+};
+
+type AlertStatus = 'none' | 'warning' | 'exceeded';
+
+// Constantes 
 const CATEGORIAS: CategoriaGasto[] = [
   'Alimentación',
   'Transporte',
@@ -21,8 +34,104 @@ const CATEGORIAS: CategoriaGasto[] = [
   'Otros',
 ];
 
+// Helpers 
+
+/** Normaliza un string para comparación sin tildes ni mayúsculas */
+const normalizar = (str: string) =>
+  str
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+/**
+ * Calcula el gasto acumulado en el localStorage para una categoría dada.
+ * Si el presupuesto es global, suma todos los gastos.
+ */
+const calcularGastoAcumulado = (
+  gastos: any[],
+  budget: SavedBudget,
+  categoria: string
+): number => {
+  if (budget.type === 'global') {
+    return gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0);
+  }
+  return gastos
+    .filter((g) => normalizar(g.categoria || '') === normalizar(categoria))
+    .reduce((acc, g) => acc + Number(g.monto || 0), 0);
+};
+
+/**
+ * Determina el estado de alerta dado el porcentaje consumido.
+ */
+const calcularStatus = (porcentaje: number): AlertStatus => {
+  if (porcentaje > 100) return 'exceeded';
+  if (porcentaje >= 80) return 'warning';
+  return 'none';
+};
+
+//  Componente de alerta inline 
+interface AlertaPresupuestoProps {
+  status: AlertStatus;
+  porcentaje: number;
+  limite: number;
+  gastoAcumulado: number;
+  nuevoMonto: number;
+  categoria: string;
+}
+
+function AlertaPresupuesto({
+  status,
+  porcentaje,
+  limite,
+  gastoAcumulado,
+  nuevoMonto,
+  categoria,
+}: AlertaPresupuestoProps) {
+  if (status === 'none') return null;
+
+  const exceso = gastoAcumulado + nuevoMonto - limite;
+
+  const esExcedido = status === 'exceeded';
+
+  const containerClasses = esExcedido
+    ? 'border border-red-200 bg-red-50 text-red-700'
+    : 'border border-amber-200 bg-amber-50 text-amber-700';
+
+  const IconComponent = esExcedido ? AlertCircle : AlertTriangle;
+
+  return (
+    <div className={`rounded-xl p-4 flex items-start gap-3 ${containerClasses}`}>
+      <IconComponent className="mt-0.5 size-5 shrink-0" />
+      <div className="space-y-0.5">
+        <p className="text-sm font-semibold">
+          {esExcedido
+            ? 'Límite de presupuesto excedido'
+            : 'Cerca del límite de presupuesto'}
+        </p>
+        <p className="text-sm">
+          {esExcedido
+            ? `Al guardar este gasto superarás el presupuesto de "${categoria}" por ${new Intl.NumberFormat(
+                'es-MX',
+                { style: 'currency', currency: 'MXN' }
+              ).format(exceso)}.`
+            : `Al guardar este gasto habrás consumido el ${porcentaje.toFixed(
+                0
+              )}% del presupuesto de "${categoria}". Quedarán ${new Intl.NumberFormat(
+                'es-MX',
+                { style: 'currency', currency: 'MXN' }
+              ).format(limite - (gastoAcumulado + nuevoMonto))}.`}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+//  Página principal 
 export default function NuevoGasto() {
   const navigate = useNavigate();
+
+  // Estado del formulario (sin cambios) 
   const [monto, setMonto] = useState('');
   const [categoria, setCategoria] = useState<string>('');
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -30,6 +139,47 @@ export default function NuevoGasto() {
   const [metodoPago, setMetodoPago] = useState<MetodoPago | ''>('');
   const [enviando, setEnviando] = useState(false);
 
+  //  Estado de presupuesto (NUEVO) 
+  const [savedBudget, setSavedBudget] = useState<SavedBudget | null>(null);
+  const [gastosLocales, setGastosLocales] = useState<any[]>([]);
+
+  // Cargar presupuesto y gastos desde localStorage al montar (NUEVO)
+  useEffect(() => {
+    const presupuestoGuardado = localStorage.getItem('presupuesto');
+    if (presupuestoGuardado) {
+      setSavedBudget(JSON.parse(presupuestoGuardado));
+    }
+
+    const gastosGuardados = JSON.parse(localStorage.getItem('gastos') || '[]');
+    setGastosLocales(gastosGuardados);
+  }, []);
+
+  // Cálculo reactivo de alerta (NUEVO) 
+  const alertaInfo = useMemo(() => {
+    const montoNum = parseFloat(monto);
+
+    // Sin presupuesto configurado o datos incompletos → sin alerta
+    if (!savedBudget || !categoria || isNaN(montoNum) || montoNum <= 0) {
+      return { status: 'none' as AlertStatus, porcentaje: 0, gastoAcumulado: 0 };
+    }
+
+    // El presupuesto por categoría solo aplica si la categoría coincide
+    if (
+      savedBudget.type === 'category' &&
+      normalizar(savedBudget.category) !== normalizar(categoria)
+    ) {
+      return { status: 'none' as AlertStatus, porcentaje: 0, gastoAcumulado: 0 };
+    }
+
+    const gastoAcumulado = calcularGastoAcumulado(gastosLocales, savedBudget, categoria);
+    const totalConNuevo = gastoAcumulado + montoNum;
+    const porcentaje = (totalConNuevo / savedBudget.limit) * 100;
+    const status = calcularStatus(porcentaje);
+
+    return { status, porcentaje, gastoAcumulado };
+  }, [monto, categoria, savedBudget, gastosLocales]);
+
+  // Submit (estructura idéntica, solo se agregan los toasts diferenciados)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -79,45 +229,52 @@ export default function NuevoGasto() {
     setEnviando(true);
     console.log('ENVIANDO GASTO:', nuevoGasto);
 
+    // Helper para disparar el toast correcto según alerta (NUEVO) 
+    const mostrarToastResultado = (esLocal = false) => {
+      const descripcionMonto = `${categoria}: ${new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+      }).format(montoNum)}`;
+
+      const sufijo = esLocal ? ' (guardado localmente)' : '';
+
+      if (alertaInfo.status === 'exceeded') {
+        toast.error(`⚠️ Presupuesto excedido${sufijo}`, {
+          description: `${descripcionMonto} — Has superado el límite de presupuesto configurado.`,
+        });
+      } else if (alertaInfo.status === 'warning') {
+        toast.warning(`Gasto registrado${sufijo}`, {
+          description: `${descripcionMonto} — Has alcanzado el ${alertaInfo.porcentaje.toFixed(0)}% de tu presupuesto.`,
+        });
+      } else {
+        toast.success(`Gasto registrado${sufijo}`, {
+          description: descripcionMonto,
+        });
+      }
+    };
+
     try {
       await saveGasto(nuevoGasto, token);
 
-      // Persistencia MVP en localStorage
+      // Persistencia MVP en localStorage (sin cambios)
       const gastosLocales = JSON.parse(localStorage.getItem('gastos') || '[]');
-      gastosLocales.push({
-        ...nuevoGasto,
-        id: Date.now(),
-      });
+      gastosLocales.push({ ...nuevoGasto, id: Date.now() });
       localStorage.setItem('gastos', JSON.stringify(gastosLocales));
-
       localStorage.setItem('updatePresupuesto', 'true');
 
-      toast.success('Gasto registrado', {
-        description: `${categoria}: ${new Intl.NumberFormat('es-MX', {
-          style: 'currency',
-          currency: 'MXN',
-        }).format(montoNum)}`,
-      });
+      mostrarToastResultado(false); // NUEVO: toast diferenciado
 
       setTimeout(() => navigate('/dashboard'), 800);
     } catch (error: any) {
       console.error('Error al conectar con el servidor:', error);
 
-      // fallback MVP si backend falla
+      // Fallback MVP (sin cambios)
       const gastosLocales = JSON.parse(localStorage.getItem('gastos') || '[]');
-      gastosLocales.push({
-        ...nuevoGasto,
-        id: Date.now(),
-      });
+      gastosLocales.push({ ...nuevoGasto, id: Date.now() });
       localStorage.setItem('gastos', JSON.stringify(gastosLocales));
       localStorage.setItem('updatePresupuesto', 'true');
 
-      toast.success('Gasto registrado localmente', {
-        description: `${categoria}: ${new Intl.NumberFormat('es-MX', {
-          style: 'currency',
-          currency: 'MXN',
-        }).format(montoNum)}`,
-      });
+      mostrarToastResultado(true); // NUEVO: toast diferenciado con sufijo local
 
       setTimeout(() => navigate('/dashboard'), 800);
     } finally {
@@ -125,6 +282,7 @@ export default function NuevoGasto() {
     }
   };
 
+  // JSX (estructura idéntica + AlertaPresupuesto entre monto y categoría)
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-3">
@@ -145,11 +303,11 @@ export default function NuevoGasto() {
         </div>
       </div>
 
-      <Card className="shadow-sm border-red-100">
+      <Card className="shadow-sm border-[--border]">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="size-12 rounded-full bg-red-100 flex items-center justify-center">
-              <TrendingDown className="size-6 text-red-600" />
+            <div className="size-12 rounded-full bg-secondary flex items-center justify-center">
+              <TrendingDown className="size-6 text-primary" />
             </div>
 
             <div>
@@ -163,6 +321,7 @@ export default function NuevoGasto() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Monto — sin cambios */}
             <div className="space-y-2">
               <Label htmlFor="monto">Monto *</Label>
 
@@ -184,6 +343,21 @@ export default function NuevoGasto() {
               </div>
             </div>
 
+            {/*  ALERTA INLINE (NUEVO) — aparece entre monto y categoría */}
+            {alertaInfo.status !== 'none' && savedBudget && (
+              <AlertaPresupuesto
+                status={alertaInfo.status}
+                porcentaje={alertaInfo.porcentaje}
+                limite={savedBudget.limit}
+                gastoAcumulado={alertaInfo.gastoAcumulado}
+                nuevoMonto={parseFloat(monto) || 0}
+                categoria={
+                  savedBudget.type === 'global' ? 'todos los gastos' : categoria
+                }
+              />
+            )}
+
+            {/* Categoría — sin cambios */}
             <div className="space-y-2">
               <Label htmlFor="categoria">Categoría *</Label>
 
@@ -202,6 +376,7 @@ export default function NuevoGasto() {
               </Select>
             </div>
 
+            {/* Fecha — sin cambios */}
             <div className="space-y-2">
               <Label htmlFor="fecha">Fecha *</Label>
 
@@ -216,6 +391,7 @@ export default function NuevoGasto() {
               />
             </div>
 
+            {/* Método de pago — sin cambios */}
             <div className="space-y-2">
               <Label htmlFor="metodoPago">Método de Pago *</Label>
 
@@ -238,6 +414,7 @@ export default function NuevoGasto() {
               </Select>
             </div>
 
+            {/* Descripción — sin cambios */}
             <div className="space-y-2">
               <Label htmlFor="descripcion">Descripción *</Label>
 
@@ -252,6 +429,7 @@ export default function NuevoGasto() {
               />
             </div>
 
+            {/* Botones — sin cambios */}
             <div className="flex gap-3 pt-4">
               <Button
                 type="button"
@@ -265,7 +443,7 @@ export default function NuevoGasto() {
 
               <Button
                 type="submit"
-                className="flex-1 bg-red-600 hover:bg-red-700"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={enviando}
               >
                 {enviando ? (
