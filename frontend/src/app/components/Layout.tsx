@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, TrendingUp, TrendingDown, History, LogOut, Wallet, PlusCircle } from 'lucide-react';
+import { Home, TrendingUp, TrendingDown, History, LogOut, Wallet, PlusCircle, Target } from 'lucide-react';
 import { Button } from './ui/button';
 import { useEffect } from 'react';
 
@@ -27,6 +27,7 @@ export default function Layout() {
     { path: '/nuevo-gasto', icon: TrendingDown, label: 'Gasto' },
     { path: '/historial', icon: History, label: 'Historial' },
     { path: '/presupuesto', icon: Wallet, label: 'Presupuesto' },
+    { path: '/metas', icon: Target, label: 'Metas' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

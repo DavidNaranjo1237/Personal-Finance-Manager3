@@ -6,7 +6,17 @@ import { Badge } from '../components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { ArrowLeft, TrendingUp, TrendingDown, Filter, Loader2 } from 'lucide-react';
 // Importamos la función real de tu API
-import { fetchHistorial } from "../api";
+import {
+  fetchHistorial,
+  updateGasto,
+  deleteGasto,
+  updateIngreso,
+  deleteIngreso
+} from "../api";
+
+
+
+
 import { MetodoPago, TransaccionDTO } from '../types/types';
 import { metodoPagoLabel, METODOS_PAGO } from '../constants/paymentMethods';
 
@@ -110,7 +120,7 @@ export default function Historial() {
   const [cargando, setCargando] = useState(true);
   const [transaccionEditando, setTransaccionEditando] = useState<TransaccionDTO | null>(null);
 
-    const guardarCambios = () => {
+    const guardarCambios = async () => {
       if (!transaccionEditando) return;
 
       if (
@@ -120,7 +130,20 @@ export default function Historial() {
         alert("Completa los campos obligatorios");
         return;
       }
-
+        if (transaccionEditando.tipo === "INGRESO") {
+  await updateIngreso(
+    transaccionEditando.id,
+    transaccionEditando
+  );
+} else {
+  await updateGasto(
+    transaccionEditando.id,
+    transaccionEditando
+  );
+}      
+              
+              
+      
       const actualizadas = todasLasTransacciones.map((t) =>
         t.id === transaccionEditando.id
           ? transaccionEditando
@@ -231,10 +254,21 @@ export default function Historial() {
               console.log("TRANSACCION A EDITAR", t);
               setTransaccionEditando(t);
             }}
-            onEliminar={(id) => {
+            onEliminar={async (id) => {
               const confirmar = confirm("¿Eliminar transacción?");
 
               if (!confirmar) return;
+              const transaccion = todasLasTransacciones.find(
+  (t) => t.id === id
+);
+
+if (!transaccion) return;
+
+if (transaccion.tipo === "INGRESO") {
+  await deleteIngreso(id);
+} else {
+  await deleteGasto(id);
+}
 
               const actualizadas = todasLasTransacciones.filter(
                 (t) => t.id !== id

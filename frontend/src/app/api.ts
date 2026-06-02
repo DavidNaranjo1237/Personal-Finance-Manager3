@@ -88,3 +88,52 @@ export async function saveGasto(gasto: any, token: string) {
 
   return handleResponse(response);
 }
+export async function updateGasto(id: number, gasto: any) {
+  const response = await fetch(
+    `${BASE_URL}/api/gastos/${id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(gasto)
+    }
+  );
+
+  return handleResponse(response);
+}
+export async function deleteGasto(id: number) {
+  const response = await fetch(
+    `${BASE_URL}/api/gastos/${id}`,
+    {
+      method: "DELETE"
+    }
+  );
+
+  return handleResponse(response);
+}
+export async function updateIngreso(id: number, ingreso: any) {
+  const response = await fetch(
+    `${BASE_URL}/api/ingresos/${id}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(ingreso)
+    }
+  );
+
+  return handleResponse(response);
+}
+
+export async function deleteIngreso(id: number) {
+  const response = await fetch(
+    `${BASE_URL}/api/ingresos/${id}`,
+    {
+      method: "DELETE"
+    }
+  );
+
+  return handleResponse(response);
+}
