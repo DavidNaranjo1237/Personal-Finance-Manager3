@@ -24,7 +24,7 @@ export default function Metas() {
         fechaLimite: ''
     });
 
-    const API_URL = "http://localhost:8080/api/metas";
+    const API_URL = "https://personal-finance-manager3.onrender.com/api/metas";
 
     useEffect(() => {
         obtenerMetas();
